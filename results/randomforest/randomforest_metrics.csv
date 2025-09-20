@@ -1,2 +1,2 @@
 model_name,model_type,evaluation_date,train_accuracy,test_accuracy,precision,recall,f1_score,overfitting_score,cohen_kappa,matthews_corrcoef
-RandomForest_Coffee_Shop_Classifier,RandomForestClassifierCustom,2025-09-19T20:12:15.850640,0.994375,0.95,0.9503810112243847,0.95,0.9500930136420008,0.04437500000000005,0.8966621886948435,0.8968537538555413
+RandomForest_Coffee_Shop_Classifier,RandomForestClassifierCustom,2025-09-20T16:37:12.730469,0.980625,0.945,0.945153989251757,0.945,0.9450526779011673,0.03562500000000002,0.8861047835990888,0.8861522860048192
