@@ -638,68 +638,77 @@ class ModelVisualizer(LoggerMixin):
     ) -> None:
         """
         Crear matriz de correlación entre las predicciones de diferentes modelos.
-        
+
         Args:
             models_predictions: Diccionario con nombre del modelo como clave y predicciones como valor
             save_path: Ruta donde guardar la gráfica
             show: Si mostrar la gráfica
         """
         import pandas as pd
-        
+
         # Crear DataFrame con las predicciones de todos los modelos
         predictions_df = pd.DataFrame(models_predictions)
-        
+
         # Calcular matriz de correlación
         correlation_matrix = predictions_df.corr()
-        
+
         # Crear la visualización
         plt.figure(figsize=(10, 8))
-        
+
         # Crear heatmap con anotaciones
         mask = np.triu(np.ones_like(correlation_matrix, dtype=bool))
         sns.heatmap(
             correlation_matrix,
             mask=mask,
             annot=True,
-            cmap='RdYlBu_r',
+            cmap="RdYlBu_r",
             vmin=-1,
             vmax=1,
             center=0,
             square=True,
-            fmt='.3f',
-            cbar_kws={"shrink": .8, "label": "Correlación"}
+            fmt=".3f",
+            cbar_kws={"shrink": 0.8, "label": "Correlación"},
         )
-        
-        plt.title('Matriz de Correlación entre Predicciones de Modelos\nCoffee Shop Success Prediction', 
-                 fontsize=14, pad=20)
-        plt.xlabel('Modelos', fontsize=12)
-        plt.ylabel('Modelos', fontsize=12)
-        
+
+        plt.title(
+            "Matriz de Correlación entre Predicciones de Modelos\nCoffee Shop Success Prediction",
+            fontsize=14,
+            pad=20,
+        )
+        plt.xlabel("Modelos", fontsize=12)
+        plt.ylabel("Modelos", fontsize=12)
+
         # Rotar etiquetas para mejor legibilidad
-        plt.xticks(rotation=45, ha='right')
+        plt.xticks(rotation=45, ha="right")
         plt.yticks(rotation=0)
-        
+
         # Añadir texto explicativo
         plt.figtext(
-            0.5, 0.02,
+            0.5,
+            0.02,
             "🎯 INTERPRETACIÓN: Valores cercanos a 1 indican que los modelos hacen predicciones similares.\n"
             "Valores cercanos a 0 indican predicciones independientes. Ayuda a identificar consenso entre algoritmos.",
-            ha="center", va="bottom", fontsize=10, style="italic",
-            bbox=dict(boxstyle="round,pad=0.5", facecolor="lightyellow", alpha=0.8)
+            ha="center",
+            va="bottom",
+            fontsize=10,
+            style="italic",
+            bbox=dict(boxstyle="round,pad=0.5", facecolor="lightyellow", alpha=0.8),
         )
-        
+
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.15)
-        
+
         if save_path:
             plt.savefig(save_path, dpi=self.config.DPI, bbox_inches="tight")
-            self.logger.info(f"Matriz de correlación de modelos guardada en: {save_path}")
-        
+            self.logger.info(
+                f"Matriz de correlación de modelos guardada en: {save_path}"
+            )
+
         if show:
             plt.show()
         else:
             plt.close()
-            
+
         return correlation_matrix
 
     def plot_models_agreement_analysis(
@@ -711,7 +720,7 @@ class ModelVisualizer(LoggerMixin):
     ) -> None:
         """
         Analizar el acuerdo entre modelos y su precisión individual.
-        
+
         Args:
             models_predictions: Diccionario con predicciones de cada modelo
             y_true: Etiquetas verdaderas
@@ -720,54 +729,60 @@ class ModelVisualizer(LoggerMixin):
         """
         import pandas as pd
         from sklearn.metrics import accuracy_score
-        
+
         # Crear DataFrame con predicciones
         predictions_df = pd.DataFrame(models_predictions)
-        
+
         # Calcular acuerdo entre modelos (consenso mayoritario)
         n_models = len(models_predictions)
         consensus_predictions = predictions_df.mode(axis=1)[0]
-        
+
         # Calcular métricas de acuerdo
-        agreement_counts = (predictions_df == consensus_predictions.values.reshape(-1, 1)).sum(axis=1)
+        agreement_counts = (
+            predictions_df == consensus_predictions.values.reshape(-1, 1)
+        ).sum(axis=1)
         full_agreement_mask = agreement_counts == n_models
         majority_agreement_mask = agreement_counts >= (n_models // 2 + 1)
-        
+
         # Calcular precisión individual y de consenso
         individual_accuracies = {}
         for model_name, predictions in models_predictions.items():
             individual_accuracies[model_name] = accuracy_score(y_true, predictions)
-        
+
         consensus_accuracy = accuracy_score(y_true, consensus_predictions)
-        
+
         # Crear visualización con subplots
         fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-        
+
         # 1. Gráfico de barras de precisión individual vs consenso
-        model_names = list(individual_accuracies.keys()) + ['Consenso']
+        model_names = list(individual_accuracies.keys()) + ["Consenso"]
         accuracies = list(individual_accuracies.values()) + [consensus_accuracy]
-        colors = ['skyblue'] * len(individual_accuracies) + ['orange']
-        
+        colors = ["skyblue"] * len(individual_accuracies) + ["orange"]
+
         axes[0, 0].bar(range(len(model_names)), accuracies, color=colors, alpha=0.7)
         axes[0, 0].set_xticks(range(len(model_names)))
-        axes[0, 0].set_xticklabels(model_names, rotation=45, ha='right')
-        axes[0, 0].set_ylabel('Precisión')
-        axes[0, 0].set_title('Precisión Individual vs Consenso')
+        axes[0, 0].set_xticklabels(model_names, rotation=45, ha="right")
+        axes[0, 0].set_ylabel("Precisión")
+        axes[0, 0].set_title("Precisión Individual vs Consenso")
         axes[0, 0].grid(True, alpha=0.3)
-        
+
         # Añadir valores en las barras
         for i, acc in enumerate(accuracies):
-            axes[0, 0].text(i, acc + 0.005, f'{acc:.3f}', ha='center', va='bottom')
-        
+            axes[0, 0].text(i, acc + 0.005, f"{acc:.3f}", ha="center", va="bottom")
+
         # 2. Distribución del nivel de acuerdo
         agreement_counts_dist = agreement_counts.value_counts().sort_index()
-        axes[0, 1].bar(agreement_counts_dist.index, agreement_counts_dist.values, 
-                      color='lightgreen', alpha=0.7)
-        axes[0, 1].set_xlabel('Número de Modelos en Acuerdo')
-        axes[0, 1].set_ylabel('Frecuencia')
-        axes[0, 1].set_title('Distribución del Nivel de Acuerdo')
+        axes[0, 1].bar(
+            agreement_counts_dist.index,
+            agreement_counts_dist.values,
+            color="lightgreen",
+            alpha=0.7,
+        )
+        axes[0, 1].set_xlabel("Número de Modelos en Acuerdo")
+        axes[0, 1].set_ylabel("Frecuencia")
+        axes[0, 1].set_title("Distribución del Nivel de Acuerdo")
         axes[0, 1].grid(True, alpha=0.3)
-        
+
         # 3. Precisión por nivel de acuerdo
         accuracy_by_agreement = {}
         for agreement_level in agreement_counts_dist.index:
@@ -776,30 +791,35 @@ class ModelVisualizer(LoggerMixin):
                 accuracy_by_agreement[agreement_level] = accuracy_score(
                     y_true[mask], consensus_predictions[mask]
                 )
-        
-        axes[1, 0].bar(accuracy_by_agreement.keys(), accuracy_by_agreement.values(),
-                      color='coral', alpha=0.7)
-        axes[1, 0].set_xlabel('Número de Modelos en Acuerdo')
-        axes[1, 0].set_ylabel('Precisión del Consenso')
-        axes[1, 0].set_title('Precisión del Consenso por Nivel de Acuerdo')
+
+        axes[1, 0].bar(
+            accuracy_by_agreement.keys(),
+            accuracy_by_agreement.values(),
+            color="coral",
+            alpha=0.7,
+        )
+        axes[1, 0].set_xlabel("Número de Modelos en Acuerdo")
+        axes[1, 0].set_ylabel("Precisión del Consenso")
+        axes[1, 0].set_title("Precisión del Consenso por Nivel de Acuerdo")
         axes[1, 0].grid(True, alpha=0.3)
-        
+
         # 4. Matriz de confusión del consenso
         from sklearn.metrics import confusion_matrix
+
         cm = confusion_matrix(y_true, consensus_predictions)
-        im = axes[1, 1].imshow(cm, cmap='Blues')
-        axes[1, 1].set_title('Matriz de Confusión - Consenso')
-        
+        im = axes[1, 1].imshow(cm, cmap="Blues")
+        axes[1, 1].set_title("Matriz de Confusión - Consenso")
+
         # Añadir anotaciones a la matriz de confusión
         for i in range(cm.shape[0]):
             for j in range(cm.shape[1]):
-                axes[1, 1].text(j, i, str(cm[i, j]), ha='center', va='center')
-        
-        axes[1, 1].set_xlabel('Predicho')
-        axes[1, 1].set_ylabel('Real')
-        
+                axes[1, 1].text(j, i, str(cm[i, j]), ha="center", va="center")
+
+        axes[1, 1].set_xlabel("Predicho")
+        axes[1, 1].set_ylabel("Real")
+
         plt.colorbar(im, ax=axes[1, 1], shrink=0.8)
-        
+
         # Añadir estadísticas generales
         stats_text = (
             f"Acuerdo completo: {full_agreement_mask.sum()}/{len(y_true)} "
@@ -808,29 +828,41 @@ class ModelVisualizer(LoggerMixin):
             f"({majority_agreement_mask.mean():.1%})\n"
             f"Precisión del consenso: {consensus_accuracy:.3f}"
         )
-        
-        fig.suptitle('Análisis de Acuerdo entre Modelos\nCoffee Shop Success Prediction', 
-                    fontsize=16, y=0.98)
-        
-        plt.figtext(0.5, 0.02, stats_text, ha="center", va="bottom", 
-                   fontsize=10, style="italic",
-                   bbox=dict(boxstyle="round,pad=0.5", facecolor="lightyellow", alpha=0.8))
-        
+
+        fig.suptitle(
+            "Análisis de Acuerdo entre Modelos\nCoffee Shop Success Prediction",
+            fontsize=16,
+            y=0.98,
+        )
+
+        plt.figtext(
+            0.5,
+            0.02,
+            stats_text,
+            ha="center",
+            va="bottom",
+            fontsize=10,
+            style="italic",
+            bbox=dict(boxstyle="round,pad=0.5", facecolor="lightyellow", alpha=0.8),
+        )
+
         plt.tight_layout()
         plt.subplots_adjust(top=0.93, bottom=0.12)
-        
+
         if save_path:
             plt.savefig(save_path, dpi=self.config.DPI, bbox_inches="tight")
-            self.logger.info(f"Análisis de acuerdo entre modelos guardado en: {save_path}")
-        
+            self.logger.info(
+                f"Análisis de acuerdo entre modelos guardado en: {save_path}"
+            )
+
         if show:
             plt.show()
         else:
             plt.close()
-            
+
         return {
-            'individual_accuracies': individual_accuracies,
-            'consensus_accuracy': consensus_accuracy,
-            'full_agreement_rate': full_agreement_mask.mean(),
-            'majority_agreement_rate': majority_agreement_mask.mean()
+            "individual_accuracies": individual_accuracies,
+            "consensus_accuracy": consensus_accuracy,
+            "full_agreement_rate": full_agreement_mask.mean(),
+            "majority_agreement_rate": majority_agreement_mask.mean(),
         }

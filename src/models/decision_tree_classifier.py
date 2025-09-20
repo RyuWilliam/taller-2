@@ -241,7 +241,125 @@ class DecisionTreeClassifierCustom(BaseClassifier):
     def plot_tree_advanced_visualization(
         self, max_depth: int = 4, save_path: Optional[str] = None, show: bool = True
     ):
-        """Visualización del árbol de decisión enfocada solo en el árbol"""
+        """Visualización del árbol de decisión con espaciado optimizado para evitar amontonamiento"""
+        if not self.is_trained:
+            raise ValueError("El modelo debe ser entrenado primero")
+
+        import matplotlib.pyplot as plt  # type: ignore
+        from sklearn.tree import plot_tree
+        import numpy as np
+
+        feature_names = self.feature_names if self.feature_names else None
+        class_names = ["No Exitosa", "Exitosa"]
+
+        # Calcular dimensiones dinámicas basadas en la estructura del árbol
+        tree_depth = min(max_depth, self.get_tree_depth())
+
+        # Calcular el número máximo de nodos en el nivel más ancho
+        max_nodes_at_level = 2 ** (tree_depth - 1) if tree_depth > 0 else 1
+
+        # Dimensiones más conservadoras para evitar amontonamiento
+        fig_width = max(30, max_nodes_at_level * 4)  # Más ancho por nodo
+        fig_height = max(16, tree_depth * 4)  # Más alto por nivel
+
+        # Crear figura con tamaño calculado dinámicamente
+        fig = plt.figure(figsize=(fig_width, fig_height))
+
+        # Crear subplot con márgenes muy amplios
+        ax = fig.add_subplot(111)
+        assert self.model is not None
+
+        # Configurar márgenes extremadamente amplios para evitar amontonamiento
+        plt.subplots_adjust(
+            left=0.05,  # Márgen izquierdo muy amplio
+            right=0.95,  # Márgen derecho muy amplio
+            top=0.90,  # Márgen superior amplio
+            bottom=0.10,  # Márgen inferior amplio
+            wspace=0.5,  # Espacio horizontal muy amplio
+            hspace=0.5,  # Espacio vertical muy amplio
+        )
+
+        # Configurar el plot del árbol con parámetros optimizados para espaciado
+        plot_tree(
+            self.model,
+            max_depth=max_depth,
+            feature_names=feature_names,
+            class_names=class_names,
+            filled=True,
+            rounded=True,
+            fontsize=7,  # Fuente más pequeña para reducir solapamiento
+            ax=ax,
+            proportion=True,  # Mostrar proporciones
+            impurity=True,  # Mostrar impureza
+            precision=1,  # Reducir precisión para texto más corto
+        )
+
+        # Ajustar los límites del eje para dar más espacio
+        ax.set_xlim(ax.get_xlim()[0] - 0.1, ax.get_xlim()[1] + 0.1)
+        ax.set_ylim(ax.get_ylim()[0] - 0.1, ax.get_ylim()[1] + 0.1)
+
+        # Información del árbol en el título
+        tree_info = (
+            f"Profundidad Real: {self.get_tree_depth()} | "
+            f"Nodos: {self.get_n_nodes()} | "
+            f"Hojas: {self.get_n_leaves()} | "
+            f"Criterio: {self.model.criterion.upper()}"
+        )
+
+        ax.set_title(
+            f"Decision Tree - Coffee Shop Success Prediction\n{tree_info}",
+            fontsize=16,
+            pad=30,
+        )
+
+        # Información general en la parte inferior
+        tree_analysis = self.analyze_tree_structure()
+        feature_importance = self.model.feature_importances_
+
+        info_text = (
+            f"🌳 ÁRBOL DE DECISIÓN\n"
+            f"• Profundidad máxima mostrada: {max_depth} (Real: {self.get_tree_depth()})\n"
+            f"• Balanceamiento de clases: {'Sí' if self.model.class_weight == 'balanced' else 'No'}\n"
+            f"• Características totales: {len(feature_importance)}\n"
+            f"• Eficiencia (hojas/nodos): {self.get_n_leaves()/self.get_n_nodes():.1%}\n"
+            f"• Nodos en nivel más ancho: {max_nodes_at_level}"
+        )
+
+        # Posicionar la caja de información
+        plt.figtext(
+            0.02,
+            0.02,
+            info_text,
+            fontsize=11,
+            bbox=dict(boxstyle="round,pad=0.8", facecolor="lightblue", alpha=0.9),
+        )
+
+        # Ajustar layout final con márgenes muy amplios
+        plt.tight_layout()
+        plt.subplots_adjust(left=0.05, right=0.95, top=0.90, bottom=0.10)
+
+        if save_path is not None:
+            plt.savefig(
+                str(save_path),
+                dpi=300,
+                bbox_inches="tight",
+                facecolor="white",
+                edgecolor="none",
+                pad_inches=0.5,  # Padding muy amplio
+            )
+            self.logger.info(
+                f"Visualización del árbol de decisión guardada en: {save_path}"
+            )
+
+        if show:
+            plt.show()
+        else:
+            plt.close()
+
+    def plot_tree_compact_visualization(
+        self, max_depth: int = 3, save_path: Optional[str] = None, show: bool = True
+    ):
+        """Visualización compacta del árbol de decisión para niveles profundos"""
         if not self.is_trained:
             raise ValueError("El modelo debe ser entrenado primero")
 
@@ -251,12 +369,15 @@ class DecisionTreeClassifierCustom(BaseClassifier):
         feature_names = self.feature_names if self.feature_names else None
         class_names = ["No Exitosa", "Exitosa"]
 
-        # Crear figura para mostrar solo el árbol
+        # Crear figura más compacta
         fig = plt.figure(figsize=(20, 12))
-        
-        # Visualización principal del árbol (ocupa toda la figura)
-        ax = plt.gca()
+        ax = fig.add_subplot(111)
         assert self.model is not None
+
+        # Configurar márgenes amplios
+        plt.subplots_adjust(left=0.1, right=0.9, top=0.85, bottom=0.15)
+
+        # Plot del árbol con configuración compacta
         plot_tree(
             self.model,
             max_depth=max_depth,
@@ -264,46 +385,54 @@ class DecisionTreeClassifierCustom(BaseClassifier):
             class_names=class_names,
             filled=True,
             rounded=True,
-            fontsize=10,
+            fontsize=6,  # Fuente muy pequeña
             ax=ax,
-            proportion=True,  # Mostrar proporciones
-            impurity=True,   # Mostrar impureza
+            proportion=True,
+            impurity=True,
+            precision=1,
         )
 
-        # Información del árbol en el título
+        # Título
         tree_info = (
             f"Profundidad Real: {self.get_tree_depth()} | "
             f"Nodos: {self.get_n_nodes()} | "
-            f"Hojas: {self.get_n_leaves()} | "
-            f"Criterio: {self.model.criterion.upper()}"
-        )
-        
-        ax.set_title(
-            f"Decision Tree - Coffee Shop Success Prediction\n{tree_info}",
-            fontsize=14, pad=20
+            f"Hojas: {self.get_n_leaves()}"
         )
 
-        # Información general en la parte inferior
-        tree_analysis = self.analyze_tree_structure()
-        feature_importance = self.model.feature_importances_
-        
-        info_text = (
-            f"🌳 ÁRBOL DE DECISIÓN\n"
-            f"• Profundidad máxima mostrada: {max_depth} (Real: {self.get_tree_depth()})\n"
-            f"• Balanceamiento de clases: {'Sí' if self.model.class_weight == 'balanced' else 'No'}\n"
-            f"• Características totales: {len(feature_importance)}\n"
-            f"• Eficiencia (hojas/nodos): {self.get_n_leaves()/self.get_n_nodes():.1%}"
+        ax.set_title(
+            f"Decision Tree - Compact View (Max Depth: {max_depth})\n{tree_info}",
+            fontsize=14,
+            pad=20,
         )
-        
-        plt.figtext(0.02, 0.02, info_text, fontsize=11, 
-                   bbox=dict(boxstyle="round,pad=0.5", facecolor="lightblue", alpha=0.8))
+
+        # Información adicional
+        info_text = (
+            f"📊 VISTA COMPACTA\n"
+            f"• Mostrando solo los primeros {max_depth} niveles\n"
+            f"• Profundidad real del árbol: {self.get_tree_depth()}\n"
+            f"• Para ver más niveles, use max_depth mayor"
+        )
+
+        plt.figtext(
+            0.02,
+            0.02,
+            info_text,
+            fontsize=10,
+            bbox=dict(boxstyle="round,pad=0.5", facecolor="lightgreen", alpha=0.8),
+        )
 
         plt.tight_layout()
-        plt.subplots_adjust(bottom=0.12)
+        plt.subplots_adjust(left=0.1, right=0.9, top=0.85, bottom=0.15)
 
         if save_path is not None:
-            plt.savefig(str(save_path), dpi=300, bbox_inches="tight")
-            self.logger.info(f"Visualización del árbol de decisión guardada en: {save_path}")
+            plt.savefig(
+                str(save_path),
+                dpi=300,
+                bbox_inches="tight",
+                facecolor="white",
+                edgecolor="none",
+            )
+            self.logger.info(f"Visualización compacta guardada en: {save_path}")
 
         if show:
             plt.show()
@@ -311,12 +440,15 @@ class DecisionTreeClassifierCustom(BaseClassifier):
             plt.close()
 
     def plot_decision_path_analysis(
-        self, X_sample: np.ndarray, sample_names: Optional[List[str]] = None,
-        save_path: Optional[str] = None, show: bool = True
+        self,
+        X_sample: np.ndarray,
+        sample_names: Optional[List[str]] = None,
+        save_path: Optional[str] = None,
+        show: bool = True,
     ):
         """
         Analizar el camino de decisión para muestras específicas.
-        
+
         Args:
             X_sample: Muestras para analizar (máximo 5)
             sample_names: Nombres descriptivos para las muestras
@@ -332,7 +464,7 @@ class DecisionTreeClassifierCustom(BaseClassifier):
         # Limitar a máximo 5 muestras para visualización clara
         X_sample = X_sample[:5]
         n_samples = len(X_sample)
-        
+
         if sample_names is None:
             sample_names = [f"Muestra {i+1}" for i in range(n_samples)]
         else:
@@ -343,27 +475,32 @@ class DecisionTreeClassifierCustom(BaseClassifier):
         leaf_id = self.model.apply(X_sample)
         feature = self.model.tree_.feature
         threshold = self.model.tree_.threshold
-        
+
         # Crear visualización
-        fig, axes = plt.subplots(1, min(n_samples, 5), figsize=(4*min(n_samples, 5), 8))
+        fig, axes = plt.subplots(
+            1, min(n_samples, 5), figsize=(4 * min(n_samples, 5), 8)
+        )
         if n_samples == 1:
             axes = [axes]
-        
+
         for i in range(min(n_samples, 5)):
             ax = axes[i]
-            
+
             # Obtener el camino de decisión para esta muestra
             sample_id = i
-            decision_path_result = decision_path(self.model, X_sample[sample_id:sample_id+1])
+            decision_path_result = decision_path(
+                self.model, X_sample[sample_id : sample_id + 1]
+            )
             path_nodes = decision_path_result.indices
-            
+
             # Crear información del camino
             path_info = []
             for node_id in path_nodes:
                 if feature[node_id] >= 0:  # No es hoja
                     feature_name = (
-                        self.feature_names[feature[node_id]] 
-                        if self.feature_names else f"X[{feature[node_id]}]"
+                        self.feature_names[feature[node_id]]
+                        if self.feature_names
+                        else f"X[{feature[node_id]}]"
                     )
                     value = X_sample[sample_id, feature[node_id]]
                     thresh = threshold[node_id]
@@ -371,41 +508,65 @@ class DecisionTreeClassifierCustom(BaseClassifier):
                     path_info.append(f"{feature_name} {direction} {thresh:.2f}")
                     path_info.append(f"(valor: {value:.2f})")
                 else:  # Es hoja
-                    prediction = self.model.predict(X_sample[sample_id:sample_id+1])[0]
-                    proba = self.model.predict_proba(X_sample[sample_id:sample_id+1])[0]
+                    prediction = self.model.predict(
+                        X_sample[sample_id : sample_id + 1]
+                    )[0]
+                    proba = self.model.predict_proba(
+                        X_sample[sample_id : sample_id + 1]
+                    )[0]
                     class_name = "Exitosa" if prediction == 1 else "No Exitosa"
                     path_info.append(f"PREDICCIÓN: {class_name}")
                     path_info.append(f"Probabilidad: {proba[prediction]:.2%}")
-            
+
             # Visualizar el camino
             y_pos = range(len(path_info))
-            ax.barh(y_pos, [1] * len(path_info), color=['lightblue' if i % 2 == 0 else 'lightgreen' for i in range(len(path_info))])
-            
+            ax.barh(
+                y_pos,
+                [1] * len(path_info),
+                color=[
+                    "lightblue" if i % 2 == 0 else "lightgreen"
+                    for i in range(len(path_info))
+                ],
+            )
+
             for j, info in enumerate(path_info):
-                ax.text(0.5, j, info, ha='center', va='center', fontsize=8, weight='bold' if 'PREDICCIÓN' in info else 'normal')
-            
+                ax.text(
+                    0.5,
+                    j,
+                    info,
+                    ha="center",
+                    va="center",
+                    fontsize=8,
+                    weight="bold" if "PREDICCIÓN" in info else "normal",
+                )
+
             ax.set_xlim(0, 1)
             ax.set_ylim(-0.5, len(path_info) - 0.5)
             ax.set_yticks([])
             ax.set_xticks([])
             ax.set_title(f"{sample_names[i]}\nCamino de Decisión", fontsize=10)
-            
+
             # Añadir marco según la predicción
-            prediction = self.model.predict(X_sample[sample_id:sample_id+1])[0]
-            color = 'green' if prediction == 1 else 'red'
+            prediction = self.model.predict(X_sample[sample_id : sample_id + 1])[0]
+            color = "green" if prediction == 1 else "red"
             for spine in ax.spines.values():
                 spine.set_edgecolor(color)
                 spine.set_linewidth(3)
 
-        plt.suptitle('Análisis de Caminos de Decisión\nCoffee Shop Success Prediction', 
-                     fontsize=14, y=0.95)
-        
+        plt.suptitle(
+            "Análisis de Caminos de Decisión\nCoffee Shop Success Prediction",
+            fontsize=14,
+            y=0.95,
+        )
+
         plt.tight_layout()
         plt.subplots_adjust(top=0.85)
 
         if save_path is not None:
             plt.savefig(str(save_path), dpi=300, bbox_inches="tight")
-            self.logger.info(f"Análisis de caminos de decisión guardado en: {save_path}")
+            self.logger.info(
+                f"Análisis de caminos de decisión guardado en: {save_path}"
+            )
 
         if show:
             plt.show()

@@ -265,10 +265,10 @@ class MultiAlgorithmEvaluator(LoggerMixin):
             )
 
         self.logger.info("Iniciando comparación de algoritmos")
-        
+
         # Generar matriz de correlación entre modelos al inicio
         self._generate_models_correlation_analysis()
-        
+
         # Generar visualizaciones avanzadas de árboles
         self._generate_advanced_tree_visualizations()
 
@@ -620,11 +620,11 @@ class MultiAlgorithmEvaluator(LoggerMixin):
     def _generate_models_correlation_analysis(self) -> None:
         """Generar análisis de correlación entre las predicciones de los modelos"""
         self.logger.info("Generando análisis de correlación entre modelos")
-        
+
         # Recopilar predicciones de todos los modelos
         models_predictions = {}
         y_test = None
-        
+
         for algorithm_name, results in self.results.items():
             eval_results = results.get("evaluation_results", {})
             y_pred = eval_results.get("y_pred")
@@ -632,27 +632,30 @@ class MultiAlgorithmEvaluator(LoggerMixin):
                 models_predictions[algorithm_name] = y_pred
                 if y_test is None:
                     y_test = eval_results.get("y_test")
-        
+
         if len(models_predictions) < 2:
-            self.logger.warning("Se necesitan al menos 2 modelos para análisis de correlación")
+            self.logger.warning(
+                "Se necesitan al menos 2 modelos para análisis de correlación"
+            )
             return
-            
+
         try:
             from ..visualization.model_visualizer import ModelVisualizer
+
             visualizer = ModelVisualizer(self.config)
-            
+
             # Crear directorio comparisons si no existe
             comparisons_dir = Path(self.config.RESULTS_PATH) / "comparisons"
             comparisons_dir.mkdir(exist_ok=True)
-            
+
             # 1. Matriz de correlación
             self.logger.info("Generando matriz de correlación entre predicciones")
             correlation_matrix = visualizer.plot_models_correlation_matrix(
                 models_predictions,
                 save_path=str(comparisons_dir / "models_correlation_matrix.png"),
-                show=False
+                show=False,
             )
-            
+
             # 2. Análisis de acuerdo entre modelos
             if y_test is not None:
                 self.logger.info("Generando análisis de acuerdo entre modelos")
@@ -660,17 +663,20 @@ class MultiAlgorithmEvaluator(LoggerMixin):
                     models_predictions,
                     y_test,
                     save_path=str(comparisons_dir / "models_agreement_analysis.png"),
-                    show=False
+                    show=False,
                 )
-                
+
                 # Guardar estadísticas de acuerdo
                 agreement_path = comparisons_dir / "models_agreement_stats.json"
                 import json
-                with open(agreement_path, 'w', encoding='utf-8') as f:
+
+                with open(agreement_path, "w", encoding="utf-8") as f:
                     json.dump(agreement_stats, f, indent=2, ensure_ascii=False)
-                
-                self.logger.info(f"Estadísticas de acuerdo guardadas en: {agreement_path}")
-            
+
+                self.logger.info(
+                    f"Estadísticas de acuerdo guardadas en: {agreement_path}"
+                )
+
         except ImportError as e:
             self.logger.warning(f"No se pudo importar ModelVisualizer: {e}")
         except Exception as e:
@@ -679,77 +685,130 @@ class MultiAlgorithmEvaluator(LoggerMixin):
     def _generate_advanced_tree_visualizations(self) -> None:
         """Generar visualizaciones avanzadas para Decision Tree y Random Forest"""
         self.logger.info("Generando visualizaciones avanzadas de árboles")
-        
+
         for algorithm_name, results in self.results.items():
             try:
                 # Obtener el modelo entrenado
                 model = results.get("trained_model")
                 if model is None:
                     continue
-                
-                algorithm_dir = Path(self.config.RESULTS_PATH) / algorithm_name.lower() / "visualizations"
+
+                algorithm_dir = (
+                    Path(self.config.RESULTS_PATH)
+                    / algorithm_name.lower()
+                    / "visualizations"
+                )
                 algorithm_dir.mkdir(parents=True, exist_ok=True)
-                
+
                 # Decision Tree visualizaciones avanzadas
-                if algorithm_name == "DecisionTree" and hasattr(model, 'plot_tree_advanced_visualization'):
-                    self.logger.info(f"Generando visualización avanzada de Decision Tree")
-                    
+                if algorithm_name == "DecisionTree" and hasattr(
+                    model, "plot_tree_advanced_visualization"
+                ):
+                    self.logger.info(
+                        f"Generando visualizaciones avanzadas de Decision Tree"
+                    )
+
                     try:
-                        # Visualización avanzada completa
+                        # Visualización avanzada con espaciado optimizado
                         model.plot_tree_advanced_visualization(
                             max_depth=4,
-                            save_path=str(algorithm_dir / "advanced_tree_visualization.png"),
-                            show=False
+                            save_path=str(
+                                algorithm_dir / "advanced_tree_visualization.png"
+                            ),
+                            show=False,
                         )
-                        self.logger.info(f"✅ Visualización avanzada de Decision Tree creada exitosamente")
-                        
+                        self.logger.info(
+                            f"✅ Visualización avanzada de Decision Tree creada exitosamente"
+                        )
+
+                        # Visualización compacta para niveles profundos
+                        if hasattr(model, "plot_tree_compact_visualization"):
+                            model.plot_tree_compact_visualization(
+                                max_depth=3,
+                                save_path=str(
+                                    algorithm_dir / "compact_tree_visualization.png"
+                                ),
+                                show=False,
+                            )
+                            self.logger.info(
+                                f"✅ Visualización compacta de Decision Tree creada exitosamente"
+                            )
+
                         # Análisis de caminos de decisión con muestras
                         eval_results = results.get("evaluation_results", {})
                         X_test = eval_results.get("X_test")
                         if X_test is not None and len(X_test) > 0:
                             # Seleccionar algunas muestras para análisis
                             n_samples = min(3, len(X_test))
-                            sample_indices = np.random.choice(len(X_test), n_samples, replace=False)
+                            sample_indices = np.random.choice(
+                                len(X_test), n_samples, replace=False
+                            )
                             X_sample = X_test[sample_indices]
-                            sample_names = [f"Cafetería {i+1}" for i in range(n_samples)]
-                            
+                            sample_names = [
+                                f"Cafetería {i+1}" for i in range(n_samples)
+                            ]
+
                             model.plot_decision_path_analysis(
                                 X_sample,
                                 sample_names=sample_names,
-                                save_path=str(algorithm_dir / "decision_paths_analysis.png"),
-                                show=False
+                                save_path=str(
+                                    algorithm_dir / "decision_paths_analysis.png"
+                                ),
+                                show=False,
                             )
-                            self.logger.info(f"✅ Análisis de caminos de decisión creado exitosamente")
-                        
+                            self.logger.info(
+                                f"✅ Análisis de caminos de decisión creado exitosamente"
+                            )
+
                     except Exception as e:
-                        self.logger.error(f"❌ Error generando visualizaciones de Decision Tree: {e}")
+                        self.logger.error(
+                            f"❌ Error generando visualizaciones de Decision Tree: {e}"
+                        )
                         import traceback
+
                         self.logger.error(f"Traceback: {traceback.format_exc()}")
-                
+
                 # Random Forest visualizaciones avanzadas
-                elif algorithm_name == "RandomForest" and hasattr(model, 'plot_forest_advanced_visualization'):
-                    self.logger.info(f"Generando visualización avanzada de Random Forest")
-                    
+                elif algorithm_name == "RandomForest" and hasattr(
+                    model, "plot_forest_advanced_visualization"
+                ):
+                    self.logger.info(
+                        f"Generando visualización avanzada de Random Forest"
+                    )
+
                     try:
                         # Visualización avanzada del bosque
                         model.plot_forest_advanced_visualization(
                             n_trees_display=4,  # Aumentado a 4 árboles por defecto
-                            save_path=str(algorithm_dir / "advanced_forest_visualization.png"),
-                            show=False
+                            save_path=str(
+                                algorithm_dir / "advanced_forest_visualization.png"
+                            ),
+                            show=False,
                         )
-                        self.logger.info(f"✅ Visualización avanzada de Random Forest creada exitosamente")
-                        
+                        self.logger.info(
+                            f"✅ Visualización avanzada de Random Forest creada exitosamente"
+                        )
+
                         # Comparación de árboles individuales
                         model.plot_individual_tree_comparison(
-                            save_path=str(algorithm_dir / "individual_trees_comparison.png"),
-                            show=False
+                            save_path=str(
+                                algorithm_dir / "individual_trees_comparison.png"
+                            ),
+                            show=False,
                         )
-                        self.logger.info(f"✅ Comparación de árboles individuales creada exitosamente")
-                        
+                        self.logger.info(
+                            f"✅ Comparación de árboles individuales creada exitosamente"
+                        )
+
                     except Exception as e:
-                        self.logger.error(f"❌ Error generando visualizaciones de Random Forest: {e}")
+                        self.logger.error(
+                            f"❌ Error generando visualizaciones de Random Forest: {e}"
+                        )
                         import traceback
+
                         self.logger.error(f"Traceback: {traceback.format_exc()}")
-                    
+
             except Exception as e:
-                self.logger.error(f"Error generando visualizaciones avanzadas para {algorithm_name}: {e}")
+                self.logger.error(
+                    f"Error generando visualizaciones avanzadas para {algorithm_name}: {e}"
+                )
