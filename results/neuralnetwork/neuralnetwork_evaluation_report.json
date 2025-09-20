@@ -29,7 +29,7 @@
       "verbose": false,
       "warm_start": false
     },
-    "evaluation_date": "2025-09-19T20:14:08.846667"
+    "evaluation_date": "2025-09-20T16:37:20.521395"
   },
   "data_info": {
     "train_samples": 1600,
@@ -51,89 +51,89 @@
   },
   "performance_metrics": {
     "train_metrics": {
-      "accuracy": 0.9475,
-      "balanced_accuracy": 0.9470284300525438,
-      "precision": 0.9477570894133683,
-      "recall": 0.9475,
-      "f1_score": 0.9475737913486006
+      "accuracy": 0.933125,
+      "balanced_accuracy": 0.9324893591856112,
+      "precision": 0.9335255203506333,
+      "recall": 0.933125,
+      "f1_score": 0.9332411984472264
     },
     "test_metrics": {
-      "accuracy": 0.9525,
-      "balanced_accuracy": 0.9541705571117336,
-      "precision": 0.9533916083916084,
-      "recall": 0.9525,
-      "f1_score": 0.9526477882490869,
-      "auc_roc": 0.9931268803817823,
-      "average_precision": 0.9900738532832144
+      "accuracy": 0.9375,
+      "balanced_accuracy": 0.938608776844071,
+      "precision": 0.9384749865519096,
+      "recall": 0.9375,
+      "f1_score": 0.9376944582224828,
+      "auc_roc": 0.9905851229380642,
+      "average_precision": 0.9868721051845947
     },
     "advanced_metrics": {
-      "cohen_kappa": 0.9021173561382722,
-      "matthews_corrcoef": 0.9027045170638873
+      "cohen_kappa": 0.871207047550358,
+      "matthews_corrcoef": 0.871774089890206
     },
-    "overfitting_score": -0.0050000000000000044
+    "overfitting_score": -0.004375000000000018
   },
   "detailed_analysis": {
     "per_class_metrics": [
       {
         "Class": "No Exitosa",
-        "Precision": 0.974025974025974,
-        "Recall": 0.9453781512605042,
-        "F1-Score": 0.9594882729211087,
+        "Precision": 0.961038961038961,
+        "Recall": 0.9327731092436975,
+        "F1-Score": 0.9466950959488273,
         "Support": 238
       },
       {
         "Class": "Exitosa",
-        "Precision": 0.9230769230769231,
-        "Recall": 0.9629629629629629,
-        "F1-Score": 0.9425981873111783,
+        "Precision": 0.9053254437869822,
+        "Recall": 0.9444444444444444,
+        "F1-Score": 0.9244712990936556,
         "Support": 162
       }
     ],
     "confusion_matrix_analysis": {
       "confusion_matrix": [
         [
-          225,
-          13
+          222,
+          16
         ],
         [
-          6,
-          156
+          9,
+          153
         ]
       ],
       "confusion_matrix_normalized_by_true": [
         [
-          0.9453781512605042,
-          0.0546218487394958
+          0.9327731092436975,
+          0.06722689075630252
         ],
         [
-          0.037037037037037035,
-          0.9629629629629629
+          0.05555555555555555,
+          0.9444444444444444
         ]
       ],
       "confusion_matrix_normalized_by_pred": [
         [
-          0.974025974025974,
-          0.07692307692307693
+          0.961038961038961,
+          0.09467455621301775
         ],
         [
-          0.025974025974025976,
-          0.9230769230769231
+          0.03896103896103896,
+          0.9053254437869822
         ]
       ],
       "confusion_matrix_normalized_overall": [
         [
-          0.5625,
-          0.0325
+          0.555,
+          0.04
         ],
         [
-          0.015,
-          0.39
+          0.0225,
+          0.3825
         ]
       ],
       "total_samples": 400,
-      "correct_predictions": 381,
-      "incorrect_predictions": 19,
-      "error_rate": 0.0475,
+      "correct_predictions": 375,
+      "incorrect_predictions": 25,
+      "error_rate": 0.0625,
       "class_distribution": [
         238,
         162
@@ -147,35 +147,35 @@
       "per_class_errors": {
         "No Exitosa": {
           "true_instances": 238,
-          "correct_predictions": 225,
-          "false_negatives": 13,
-          "false_positives": 6,
-          "accuracy_for_class": 0.9453781512605042
+          "correct_predictions": 222,
+          "false_negatives": 16,
+          "false_positives": 9,
+          "accuracy_for_class": 0.9327731092436975
         },
         "Exitosa": {
           "true_instances": 162,
-          "correct_predictions": 156,
-          "false_negatives": 6,
-          "false_positives": 13,
-          "accuracy_for_class": 0.9629629629629629
+          "correct_predictions": 153,
+          "false_negatives": 9,
+          "false_positives": 16,
+          "accuracy_for_class": 0.9444444444444444
         }
       },
       "most_common_confusions": [
         {
           "true_class": "No Exitosa",
           "predicted_class": "Exitosa",
-          "count": 13,
-          "percentage": 5.46218487394958
+          "count": 16,
+          "percentage": 6.722689075630252
         },
         {
           "true_class": "Exitosa",
           "predicted_class": "No Exitosa",
-          "count": 6,
-          "percentage": 3.7037037037037033
+          "count": 9,
+          "percentage": 5.555555555555555
         }
       ],
-      "total_errors": 19,
-      "error_rate": 0.0475
+      "total_errors": 25,
+      "error_rate": 0.0625
     },
     "cross_validation": {
       "accuracy": {
@@ -234,12 +234,12 @@
   },
   "feature_analysis": {
     "feature_importance": {
-      "Number_of_Customers_Per_Day": 0.49013590530469087,
-      "Average_Order_Value": 0.4046470846120122,
-      "Operating_Hours_Per_Day": 0.010521701008329725,
+      "Number_of_Customers_Per_Day": 0.5306704707560629,
+      "Average_Order_Value": 0.3937232524964337,
+      "Operating_Hours_Per_Day": 0.0,
       "Number_of_Employees": 0.0,
-      "Marketing_Spend_Per_Day": 0.08768084173608066,
-      "Location_Foot_Traffic": 0.007014467338886515
+      "Marketing_Spend_Per_Day": 0.07560627674750359,
+      "Location_Foot_Traffic": 0.0
     }
   }
 }
