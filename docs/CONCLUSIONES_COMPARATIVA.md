@@ -2,7 +2,7 @@
 
 ## Resumen Ejecutivo
 
-Este análisis comparativo evalúa 5 algoritmos de Machine Learning para predecir el éxito de cafeterías basado en 6 características operativas. El objetivo es identificar cafeterías con ingresos diarios de $2,000 o más usando un dataset de 2,000 muestras dividido 80/20. Los resultados muestran que **Neural Network (MLP)** es el mejor algoritmo con un accuracy del 95.25%, seguido muy de cerca por Random Forest (95.00%) y SVM (94.75%).
+Este análisis comparativo evalúa 5 algoritmos de Machine Learning para predecir el éxito de cafeterías basado en 6 características operativas. El objetivo es identificar cafeterías con ingresos diarios de $2,000 o más usando un dataset de 2,000 muestras dividido 80/20. Los resultados actuales muestran que **Neural Network (MLP)** es el mejor algoritmo con un accuracy del 95.25%, seguido muy de cerca por Random Forest (95.00%) y SVM (94.75%).
 
 ## Análisis Detallado de Resultados
 

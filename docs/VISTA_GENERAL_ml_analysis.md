@@ -242,6 +242,62 @@ El dataset original contiene `Daily_Revenue` (variable continua). Para crear un 
 - **Manejo de NaN**: Valores faltantes van al final del ranking
 - **Resultado**: Overall rank de 1 a 5
 
+#### 7.2 Resultados Actuales de Rendimiento
+
+**Ranking Final de Algoritmos:**
+
+1. **Neural Network (MLP)** - Rank: 1.0
+
+   - Accuracy: 95.25%
+   - Precision: 95.34%
+   - Recall: 95.25%
+   - F1-Score: 95.26%
+   - AUC-ROC: 99.31%
+   - Tiempo de evaluación: 0.36s
+
+2. **Random Forest** - Rank: 2.0
+
+   - Accuracy: 95.00%
+   - Precision: 95.04%
+   - Recall: 95.00%
+   - F1-Score: 95.01%
+   - AUC-ROC: 99.09%
+   - Tiempo de evaluación: 3.48s
+
+3. **SVM** - Rank: 3.0
+
+   - Accuracy: 94.75%
+   - Precision: 94.78%
+   - Recall: 94.75%
+   - F1-Score: 94.76%
+   - AUC-ROC: 99.21%
+   - Tiempo de evaluación: 1.77s
+
+4. **Logistic Regression** - Rank: 4.0
+
+   - Accuracy: 93.00%
+   - Precision: 93.24%
+   - Recall: 93.00%
+   - F1-Score: 93.03%
+   - AUC-ROC: 98.84%
+   - Tiempo de evaluación: 0.14s
+
+5. **Decision Tree** - Rank: 5.0
+   - Accuracy: 85.50%
+   - Precision: 86.24%
+   - Recall: 85.50%
+   - F1-Score: 85.61%
+   - AUC-ROC: 88.60%
+   - Tiempo de evaluación: 0.06s
+
+#### 7.3 Análisis de Rendimiento
+
+- **Mejor modelo**: Neural Network con 95.25% de accuracy
+- **Más rápido**: Decision Tree (0.06s) pero con menor rendimiento
+- **Balance óptimo**: SVM con buen rendimiento (94.75%) y tiempo moderado (1.77s)
+- **Rango de accuracy**: 85.50% - 95.25% (diferencia de 9.75%)
+- **Todos los modelos superan el 85% de accuracy**, indicando buena capacidad predictiva
+
 #### 7.2 Visualizaciones Comparativas
 
 - **Gráfico de barras**: Métricas por algoritmo
