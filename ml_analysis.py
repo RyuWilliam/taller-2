@@ -86,6 +86,11 @@ def main():
         action="store_true",
         help="Modo rápido (sin optimización de hiperparámetros)",
     )
+    parser.add_argument(
+        "--retrain",
+        action="store_true",
+        help="Forzar reentrenamiento de todos los modelos (ignorar caché)",
+    )
 
     args = parser.parse_args()
 
@@ -184,18 +189,60 @@ def main():
         )
 
         # ================================================================
-        # PASO 4: PREPARACIÓN DE DATOS
+        # PASO 4: PREPARACIÓN DE DATOS (CON CACHÉ)
         # ================================================================
         print("\n🔄 PASO 4: PREPARACIÓN DE DATOS")
         print("-" * 60)
 
-        preprocessor = DataPreprocessor(config)
-        print("Ejecutando pipeline de preprocesamiento...")
+        # Verificar si los datos preprocesados ya existen
+        data_cache_path = Path(config.RESULTS_PATH) / "preprocessed_data.pkl"
 
-        X_train, X_test, y_train, y_test = preprocessor.preprocess_pipeline(df_sample)
+        if data_cache_path.exists() and not args.retrain:
+            print("📦 Cargando datos preprocesados desde caché...")
+            try:
+                import joblib
 
-        feature_names = preprocessor.get_feature_names()
-        target_classes = preprocessor.get_target_classes() or ["No Exitosa", "Exitosa"]
+                cached_data = joblib.load(data_cache_path)
+                X_train = cached_data["X_train"]
+                X_test = cached_data["X_test"]
+                y_train = cached_data["y_train"]
+                y_test = cached_data["y_test"]
+                feature_names = cached_data["feature_names"]
+                target_classes = cached_data["target_classes"]
+                print("   ✅ Datos preprocesados cargados exitosamente")
+            except Exception as e:
+                print(f"   ❌ Error cargando datos: {e}")
+                print("   🔄 Preprocesando datos de nuevo...")
+                data_cache_path = None
+
+        if not data_cache_path.exists() or args.retrain:
+            preprocessor = DataPreprocessor(config)
+            print("Ejecutando pipeline de preprocesamiento...")
+
+            X_train, X_test, y_train, y_test = preprocessor.preprocess_pipeline(
+                df_sample
+            )
+
+            feature_names = preprocessor.get_feature_names()
+            target_classes = preprocessor.get_target_classes() or [
+                "No Exitosa",
+                "Exitosa",
+            ]
+
+            # Guardar datos preprocesados en caché
+            print("💾 Guardando datos preprocesados en caché...")
+            import joblib
+
+            data_cache = {
+                "X_train": X_train,
+                "X_test": X_test,
+                "y_train": y_train,
+                "y_test": y_test,
+                "feature_names": feature_names,
+                "target_classes": target_classes,
+            }
+            joblib.dump(data_cache, data_cache_path)
+            print("   ✅ Datos preprocesados guardados en caché")
 
         print(f"✅ Preprocesamiento completado:")
         print(f"   • Características finales: {len(feature_names)}")
@@ -262,27 +309,48 @@ def main():
             name: algo for name, algo in algorithms.items() if name in args.algorithms
         }
 
-        print(f"🤖 Entrenando y evaluando {len(selected_algorithms)} algoritmos...")
+        print(f"🤖 Procesando {len(selected_algorithms)} algoritmos...")
 
         trained_models = {}
 
         for i, (algo_name, algorithm) in enumerate(selected_algorithms.items(), 1):
             print(f"\n   [{i}/{len(selected_algorithms)}] Procesando {algo_name}...")
 
-            start_time = time.time()
-
-            # Entrenar modelo
-            print(f"      • Entrenando {algo_name}...")
-            algorithm.train(
-                X_train,
-                y_train,
-                optimize_params=not args.quick_mode,
-                use_grid_search=True,
-                feature_names=feature_names,
+            # Verificar si el modelo ya existe
+            model_path = (
+                Path(config.RESULTS_PATH)
+                / algo_name.lower()
+                / f"{algo_name.lower()}_model.pkl"
             )
 
-            training_time = time.time() - start_time
-            print(f"      • Entrenamiento completado en {training_time:.2f}s")
+            model_exists = model_path.exists()
+
+            if model_exists and not args.retrain:
+                # Cargar modelo existente
+                print(f"      • Cargando modelo existente de {algo_name}...")
+                start_time = time.time()
+                try:
+                    algorithm.load_model(str(model_path))
+                    loading_time = time.time() - start_time
+                    print(f"      • Modelo cargado exitosamente en {loading_time:.2f}s")
+                except Exception as e:
+                    print(f"      • Error cargando modelo: {e}")
+                    print(f"      • Entrenando nuevo modelo...")
+                    model_exists = False
+
+            if not model_exists or args.retrain:
+                # Entrenar modelo
+                print(f"      • Entrenando {algo_name}...")
+                start_time = time.time()
+                algorithm.train(
+                    X_train,
+                    y_train,
+                    optimize_params=not args.quick_mode,
+                    use_grid_search=True,
+                    feature_names=feature_names,
+                )
+                training_time = time.time() - start_time
+                print(f"      • Entrenamiento completado en {training_time:.2f}s")
 
             # Evaluar modelo
             print(f"      • Evaluando {algo_name}...")
@@ -351,8 +419,33 @@ def main():
         print("\n🔄 PASO 6: COMPARACIÓN Y ANÁLISIS DE MODELOS")
         print("-" * 60)
 
-        print("📊 Comparando rendimiento de algoritmos...")
-        comparison_results = multi_evaluator.compare_algorithms()
+        # Verificar si los resultados de comparación ya existen
+        comparison_cache_path = Path(config.RESULTS_PATH) / "comparison_results.pkl"
+
+        if comparison_cache_path.exists() and not args.retrain:
+            print("📦 Cargando resultados de comparación desde caché...")
+            try:
+                import joblib
+
+                comparison_results = joblib.load(comparison_cache_path)
+                # Asignar los resultados al evaluador para que estén disponibles para visualizaciones
+                multi_evaluator.comparison_results = comparison_results
+                print("   ✅ Resultados de comparación cargados exitosamente")
+            except Exception as e:
+                print(f"   ❌ Error cargando comparación: {e}")
+                print("   🔄 Generando comparación de nuevo...")
+                comparison_cache_path = None
+
+        if not comparison_cache_path.exists() or args.retrain:
+            print("📊 Comparando rendimiento de algoritmos...")
+            comparison_results = multi_evaluator.compare_algorithms()
+
+            # Guardar resultados de comparación en caché
+            print("💾 Guardando resultados de comparación en caché...")
+            import joblib
+
+            joblib.dump(comparison_results, comparison_cache_path)
+            print("   ✅ Resultados de comparación guardados en caché")
 
         # Mostrar resumen de comparación
         multi_evaluator.print_comparison_summary()
