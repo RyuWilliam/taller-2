@@ -19,7 +19,7 @@
       "tol": 0.001,
       "verbose": false
     },
-    "evaluation_date": "2025-09-19T20:09:58.811335"
+    "evaluation_date": "2025-09-20T16:37:04.802012"
   },
   "data_info": {
     "train_samples": 1600,
@@ -42,88 +42,88 @@
   "performance_metrics": {
     "train_metrics": {
       "accuracy": 0.944375,
-      "balanced_accuracy": 0.9419530815830874,
-      "precision": 0.9443406023034835,
+      "balanced_accuracy": 0.9417084279138495,
+      "precision": 0.9443248305894124,
       "recall": 0.944375,
-      "f1_score": 0.944354368710668
+      "f1_score": 0.9443403718583102
     },
     "test_metrics": {
-      "accuracy": 0.9475,
-      "balanced_accuracy": 0.9470121381886087,
-      "precision": 0.9477582205029013,
-      "recall": 0.9475,
-      "f1_score": 0.9475743352018157,
-      "auc_roc": 0.9921153646643842,
-      "average_precision": 0.9886076741775798
+      "accuracy": 0.9525,
+      "balanced_accuracy": 0.9521993982778296,
+      "precision": 0.9527446808510638,
+      "recall": 0.9525,
+      "f1_score": 0.9525672556587854,
+      "auc_roc": 0.9924784728706297,
+      "average_precision": 0.9891991647429117
     },
     "advanced_metrics": {
-      "cohen_kappa": 0.891388673390225,
-      "matthews_corrcoef": 0.8914959906799318
+      "cohen_kappa": 0.9017326092578226,
+      "matthews_corrcoef": 0.9018411718888663
     },
-    "overfitting_score": -0.0031250000000000444
+    "overfitting_score": -0.008125000000000049
   },
   "detailed_analysis": {
     "per_class_metrics": [
       {
         "Class": "No Exitosa",
-        "Precision": 0.9617021276595744,
-        "Recall": 0.9495798319327731,
-        "F1-Score": 0.9556025369978859,
+        "Precision": 0.9659574468085106,
+        "Recall": 0.9537815126050421,
+        "F1-Score": 0.959830866807611,
         "Support": 238
       },
       {
         "Class": "Exitosa",
-        "Precision": 0.9272727272727272,
-        "Recall": 0.9444444444444444,
-        "F1-Score": 0.9357798165137615,
+        "Precision": 0.9333333333333333,
+        "Recall": 0.9506172839506173,
+        "F1-Score": 0.9418960244648318,
         "Support": 162
       }
     ],
     "confusion_matrix_analysis": {
       "confusion_matrix": [
         [
-          226,
-          12
+          227,
+          11
         ],
         [
-          9,
-          153
+          8,
+          154
         ]
       ],
       "confusion_matrix_normalized_by_true": [
         [
-          0.9495798319327731,
-          0.05042016806722689
+          0.9537815126050421,
+          0.046218487394957986
         ],
         [
-          0.05555555555555555,
-          0.9444444444444444
+          0.04938271604938271,
+          0.9506172839506173
         ]
       ],
       "confusion_matrix_normalized_by_pred": [
         [
-          0.9617021276595744,
-          0.07272727272727272
+          0.9659574468085106,
+          0.06666666666666667
         ],
         [
-          0.03829787234042553,
-          0.9272727272727272
+          0.03404255319148936,
+          0.9333333333333333
         ]
       ],
       "confusion_matrix_normalized_overall": [
         [
-          0.565,
-          0.03
+          0.5675,
+          0.0275
         ],
         [
-          0.0225,
-          0.3825
+          0.02,
+          0.385
         ]
       ],
       "total_samples": 400,
-      "correct_predictions": 379,
-      "incorrect_predictions": 21,
-      "error_rate": 0.0525,
+      "correct_predictions": 381,
+      "incorrect_predictions": 19,
+      "error_rate": 0.0475,
       "class_distribution": [
         238,
         162
@@ -137,35 +137,35 @@
       "per_class_errors": {
         "No Exitosa": {
           "true_instances": 238,
-          "correct_predictions": 226,
-          "false_negatives": 12,
-          "false_positives": 9,
-          "accuracy_for_class": 0.9495798319327731
+          "correct_predictions": 227,
+          "false_negatives": 11,
+          "false_positives": 8,
+          "accuracy_for_class": 0.9537815126050421
         },
         "Exitosa": {
           "true_instances": 162,
-          "correct_predictions": 153,
-          "false_negatives": 9,
-          "false_positives": 12,
-          "accuracy_for_class": 0.9444444444444444
+          "correct_predictions": 154,
+          "false_negatives": 8,
+          "false_positives": 11,
+          "accuracy_for_class": 0.9506172839506173
         }
       },
       "most_common_confusions": [
         {
           "true_class": "No Exitosa",
           "predicted_class": "Exitosa",
-          "count": 12,
-          "percentage": 5.042016806722689
+          "count": 11,
+          "percentage": 4.621848739495799
         },
         {
           "true_class": "Exitosa",
           "predicted_class": "No Exitosa",
-          "count": 9,
-          "percentage": 5.555555555555555
+          "count": 8,
+          "percentage": 4.938271604938271
         }
       ],
-      "total_errors": 21,
-      "error_rate": 0.0525
+      "total_errors": 19,
+      "error_rate": 0.0475
     },
     "cross_validation": {
       "accuracy": {
@@ -224,12 +224,12 @@
   },
   "feature_analysis": {
     "feature_importance": {
-      "Number_of_Customers_Per_Day": 0.5117967332123412,
-      "Average_Order_Value": 0.4047186932849364,
-      "Operating_Hours_Per_Day": 0.001361161524500959,
+      "Number_of_Customers_Per_Day": 0.4927979048450459,
+      "Average_Order_Value": 0.3998254037538193,
+      "Operating_Hours_Per_Day": 0.008729812309035403,
       "Number_of_Employees": 0.0,
-      "Marketing_Spend_Per_Day": 0.08212341197822146,
-      "Location_Foot_Traffic": 0.0
+      "Marketing_Spend_Per_Day": 0.0951549541684854,
+      "Location_Foot_Traffic": 0.0034919249236141842
     }
   }
 }
