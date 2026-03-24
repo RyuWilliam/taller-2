@@ -496,16 +496,18 @@ def main():
             print(f"   pero no fue entrenado en esta ejecución.")
             print(f"   Seleccionando el mejor algoritmo entrenado en esta ejecución...\n")
             
-            # Get the best algorithm from trained models
+            # Get the best algorithm from trained models using comparison_table
             best_trained = None
             best_trained_accuracy = -1
-            for algo_name, model in trained_models.items():
-                algo_results = next(
-                    (r for r in comparison_results["algorithms"] if r["name"] == algo_name),
+            comparison_table = comparison_results["comparison_table"]
+            
+            for algo_name in trained_models.keys():
+                algo_record = next(
+                    (r for r in comparison_table if r["Algorithm"] == algo_name),
                     None
                 )
-                if algo_results and algo_results["metrics"]["accuracy"] > best_trained_accuracy:
-                    best_trained_accuracy = algo_results["metrics"]["accuracy"]
+                if algo_record and algo_record["Accuracy"] > best_trained_accuracy:
+                    best_trained_accuracy = algo_record["Accuracy"]
                     best_trained = algo_name
             
             if best_trained:
