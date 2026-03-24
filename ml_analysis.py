@@ -488,6 +488,34 @@ def main():
         # ANÁLISIS ESPECÍFICO DEL MEJOR MODELO
         # ================================================================
         best_algorithm_name = comparison_results["best_algorithm"]["name"]
+        
+        # Only perform detailed analysis if the best model was trained in this run
+        if best_algorithm_name not in trained_models:
+            # Find the best algorithm that was actually trained
+            print(f"\n⚠️  NOTA: {best_algorithm_name} fue el mejor en comparación,")
+            print(f"   pero no fue entrenado en esta ejecución.")
+            print(f"   Seleccionando el mejor algoritmo entrenado en esta ejecución...\n")
+            
+            # Get the best algorithm from trained models
+            best_trained = None
+            best_trained_accuracy = -1
+            for algo_name, model in trained_models.items():
+                algo_results = next(
+                    (r for r in comparison_results["algorithms"] if r["name"] == algo_name),
+                    None
+                )
+                if algo_results and algo_results["metrics"]["accuracy"] > best_trained_accuracy:
+                    best_trained_accuracy = algo_results["metrics"]["accuracy"]
+                    best_trained = algo_name
+            
+            if best_trained:
+                best_algorithm_name = best_trained
+                print(f"✅ Mejor algoritmo entrenado en esta ejecución: {best_algorithm_name}\n")
+            else:
+                print("✅ Análisis comparativo completado exitosamente.")
+                print("   (Sin análisis detallado adicional)")
+                return
+
         best_model = trained_models[best_algorithm_name]
 
         print(f"\n🏆 ANÁLISIS DETALLADO DEL MEJOR MODELO: {best_algorithm_name}")
