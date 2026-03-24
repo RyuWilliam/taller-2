@@ -11,6 +11,8 @@ import os
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
+from .validators import ConfigValidator
+
 
 @dataclass
 class Config:
@@ -61,7 +63,17 @@ class Config:
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
     def __post_init__(self):
-        """Inicialización post-creación de la configuración."""
+        """Inicialización post-creación de la configuración con validación."""
+        # Validar configuración crítica
+        try:
+            ConfigValidator.validate_test_size(self.TEST_SIZE)
+            ConfigValidator.validate_cv_folds(self.CV_FOLDS)
+            ConfigValidator.validate_n_jobs(self.N_JOBS)
+            ConfigValidator.validate_random_state(self.RANDOM_STATE)
+            ConfigValidator.validate_scoring_metric(self.SCORING_METRIC)
+        except Exception as e:
+            raise ValueError(f"Configuración inválida: {str(e)}")
+        
         # Crear directorios principales
         os.makedirs(self.RESULTS_PATH, exist_ok=True)
 

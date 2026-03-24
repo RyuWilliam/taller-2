@@ -1,15 +1,25 @@
 """Clase base para todos los clasificadores de ML.
-Define la interfaz común y funcionalidades compartidas entre algoritmos."""
+
+Define la interfaz común y funcionalidades compartidas entre algoritmos.
+Proporciona validación de entrada, manejo de errores, y utilidades comunes.
+"""
 
 import numpy as np
 from typing import Optional, Dict, Any, List
 from abc import ABC, abstractmethod
 import joblib
+from pathlib import Path
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, cross_val_score
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 from ..utils.logger import LoggerMixin
 from ..utils.config import Config
+from ..utils.validators import DataValidator, HyperparameterValidator
+from ..utils.exceptions import (
+    InvalidModelStateError,
+    ModelTrainingError,
+    ModelPredictionError,
+)
 
 
 class BaseClassifier(LoggerMixin, BaseEstimator, ClassifierMixin, ABC):
@@ -67,18 +77,74 @@ class BaseClassifier(LoggerMixin, BaseEstimator, ClassifierMixin, ABC):
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """Método predict requerido por ClassifierMixin"""
+        """
+        Método predict requerido por ClassifierMixin.
+        
+        Args:
+            X: Características a predecir.
+            
+        Returns:
+            Array de predicciones.
+            
+        Raises:
+            InvalidModelStateError: Si modelo no está entrenado.
+            ModelPredictionError: Si ocurre error en predicción.
+        """
         if not self.is_trained:
-            raise ValueError("El modelo debe ser entrenado antes de predecir")
-        assert self.model is not None
-        return self.model.predict(X)
+            raise InvalidModelStateError(
+                f"El modelo {self.get_algorithm_name()} debe ser entrenado antes de predecir"
+            )
+        
+        try:
+            DataValidator.validate_features(X)
+            assert self.model is not None
+            return self.model.predict(X)
+        except AssertionError:
+            raise InvalidModelStateError("Modelo interno es None")
+        except Exception as e:
+            raise ModelPredictionError(
+                f"Error durante predicción: {str(e)}",
+                context=f"Algorithm: {self.get_algorithm_name()}, X_shape: {X.shape}"
+            )
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        """Método predict_proba requerido por ClassifierMixin"""
+        """
+        Método predict_proba requerido por ClassifierMixin.
+        
+        Args:
+            X: Características para obtener probabilidades.
+            
+        Returns:
+            Array de probabilidades de clase.
+            
+        Raises:
+            InvalidModelStateError: Si modelo no está entrenado.
+            ModelPredictionError: Si modelo no soporta predict_proba.
+        """
         if not self.is_trained:
-            raise ValueError("El modelo debe ser entrenado antes de predecir")
-        assert self.model is not None
-        return self.model.predict_proba(X)
+            raise InvalidModelStateError(
+                f"El modelo {self.get_algorithm_name()} debe ser entrenado antes de predecir"
+            )
+        
+        try:
+            DataValidator.validate_features(X)
+            assert self.model is not None
+            
+            if not hasattr(self.model, 'predict_proba'):
+                raise ModelPredictionError(
+                    f"El modelo {self.get_algorithm_name()} no soporta predict_proba"
+                )
+            
+            return self.model.predict_proba(X)
+        except AssertionError:
+            raise InvalidModelStateError("Modelo interno es None")
+        except Exception as e:
+            if isinstance(e, ModelPredictionError):
+                raise
+            raise ModelPredictionError(
+                f"Error durante predict_proba: {str(e)}",
+                context=f"Algorithm: {self.get_algorithm_name()}, X_shape: {X.shape}"
+            )
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
         """Método score requerido por ClassifierMixin"""
@@ -95,23 +161,52 @@ class BaseClassifier(LoggerMixin, BaseEstimator, ClassifierMixin, ABC):
         use_grid_search: bool = True,
         feature_names: Optional[List[str]] = None,
     ) -> None:
-        """Entrenar el modelo con optimización opcional de hiperparámetros"""
+        """
+        Entrenar el modelo con optimización opcional de hiperparámetros.
+        
+        Args:
+            X_train: Características de entrenamiento.
+            y_train: Target de entrenamiento.
+            optimize_params: Si optimizar hiperparámetros.
+            use_grid_search: Si usar GridSearch (vs RandomizedSearch).
+            feature_names: Nombres de características.
+            
+        Raises:
+            ModelTrainingError: Si ocurre error durante entrenamiento.
+        """
+        try:
+            # Validar inputs
+            DataValidator.validate_features(X_train)
+            DataValidator.validate_target(y_train)
+            
+            if len(X_train) != len(y_train):
+                raise ModelTrainingError(
+                    f"X_train y y_train deben tener mismo tamaño, "
+                    f"got {len(X_train)} vs {len(y_train)}"
+                )
+            
+            self.logger.info(f"Iniciando entrenamiento de {self.get_algorithm_name()}")
 
-        self.logger.info(f"Iniciando entrenamiento de {self.get_algorithm_name()}")
+            if feature_names:
+                DataValidator.validate_feature_names(feature_names, X_train.shape[1])
+                self.feature_names = feature_names
 
-        if feature_names:
-            self.feature_names = feature_names
+            if optimize_params:
+                self._optimize_hyperparameters(X_train, y_train, use_grid_search)
+            else:
+                # Usar parámetros por defecto
+                params = self.get_default_params()
+                self.model = self._create_model(**params)
+                self.model.fit(X_train, y_train)
 
-        if optimize_params:
-            self._optimize_hyperparameters(X_train, y_train, use_grid_search)
-        else:
-            # Usar parámetros por defecto
-            params = self.get_default_params()
-            self.model = self._create_model(**params)
-            self.model.fit(X_train, y_train)
-
-        self.is_trained = True
-        self.logger.info(f"Entrenamiento de {self.get_algorithm_name()} completado")
+            self.is_trained = True
+            self.logger.info(f"Entrenamiento de {self.get_algorithm_name()} completado")
+            
+        except Exception as e:
+            raise ModelTrainingError(
+                f"Error durante entrenamiento: {str(e)}",
+                context=f"Algorithm: {self.get_algorithm_name()}, X_shape: {X_train.shape}"
+            )
 
     def _optimize_hyperparameters(
         self, X_train: np.ndarray, y_train: np.ndarray, use_grid_search: bool = True
@@ -204,33 +299,70 @@ class BaseClassifier(LoggerMixin, BaseEstimator, ClassifierMixin, ABC):
             return None
 
     def save_model(self, file_path: str) -> None:
-        """Guardar modelo entrenado"""
-        if not self.is_trained:
-            raise ValueError("No se puede guardar un modelo no entrenado")
+        """
+        Guardar modelo entrenado.
+        
+        Args:
+            file_path: Ruta donde guardar el modelo.
+            
+        Raises:
+            InvalidModelStateError: Si modelo no está entrenado.
+        """
+        if not self.is_trained or self.model is None:
+            raise InvalidModelStateError(
+                f"No se puede guardar un modelo {self.get_algorithm_name()} no entrenado"
+            )
+        
+        try:
+            # Crear directorio si es necesario
+            Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+            
+            model_data = {
+                "model": self.model,
+                "algorithm": self.get_algorithm_name(),
+                "best_params": self.best_params,
+                "cv_results": self.cv_results,
+                "feature_names": self.feature_names,
+                "config": self.config.__dict__,
+            }
 
-        model_data = {
-            "model": self.model,
-            "algorithm": self.get_algorithm_name(),
-            "best_params": self.best_params,
-            "cv_results": self.cv_results,
-            "feature_names": self.feature_names,
-            "config": self.config.__dict__,
-        }
-
-        joblib.dump(model_data, file_path)
-        self.logger.info(f"Modelo guardado en: {file_path}")
+            joblib.dump(model_data, file_path)
+            self.logger.info(f"Modelo guardado en: {file_path}")
+        except Exception as e:
+            raise IOError(f"Error guardando modelo en {file_path}: {str(e)}")
 
     def load_model(self, file_path: str) -> None:
-        """Cargar modelo desde archivo"""
-        model_data = joblib.load(file_path)
+        """
+        Cargar modelo desde archivo.
+        
+        Args:
+            file_path: Ruta del archivo guardado.
+            
+        Raises:
+            IOError: Si archivo no existe o es inválido.
+        """
+        try:
+            path = Path(file_path)
+            if not path.exists():
+                raise FileNotFoundError(f"Archivo de modelo no encontrado: {file_path}")
+            
+            model_data = joblib.load(file_path)
 
-        self.model = model_data["model"]
-        self.best_params = model_data.get("best_params", {})
-        self.cv_results = model_data.get("cv_results", {})
-        self.feature_names = model_data.get("feature_names", [])
-        self.is_trained = True
+            # Validar que contiene los campos esperados
+            required_fields = ["model"]
+            missing_fields = [f for f in required_fields if f not in model_data]
+            if missing_fields:
+                raise ValueError(f"Archivo falta campos: {missing_fields}")
+            
+            self.model = model_data.get("model")
+            self.best_params = model_data.get("best_params", {})
+            self.cv_results = model_data.get("cv_results", {})
+            self.feature_names = model_data.get("feature_names", [])
+            self.is_trained = True
 
-        self.logger.info(f"Modelo cargado desde: {file_path}")
+            self.logger.info(f"Modelo cargado desde: {file_path}")
+        except Exception as e:
+            raise IOError(f"Error cargando modelo desde {file_path}: {str(e)}")
 
     def get_model_summary(self) -> Dict[str, Any]:
         """Obtener resumen del modelo"""
